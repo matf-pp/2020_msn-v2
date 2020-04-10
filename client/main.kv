@@ -1,0 +1,69 @@
+#:kivy 1.10.1
+#:set textFontSize 25
+#:set labelFontSize 20
+<LoginScreen>:
+    canvas.before:
+        Color:
+            rgba: 0.1875, 0.1875, 0.1875, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    cols: 1
+    padding: [100, 50]
+    spacing: 20
+    Label:
+        text: "Please enter the IP Adress:"
+        font_size: labelFontSize
+        size_hint: (1,0.5)
+
+    TextInput:
+        padding: (20,(self.height - textFontSize)/2)
+        font_size: textFontSize - 5
+        id: ip
+        
+    Label:
+        text: "Enter the server password:"
+        font_size: labelFontSize
+        size_hint: (1,0.5)
+
+    TextInput:
+        padding: (20,(self.height - textFontSize)/2)
+        font_size: textFontSize - 5
+        id: password
+
+    Label:
+        text: "Enter your username:"
+        font_size: labelFontSize
+        size_hint: (1,0.5)
+
+    TextInput:
+        padding: (20,(self.height - textFontSize)/2)
+        font_size: textFontSize - 5
+        id: username
+
+    Button:
+        text: "Login"
+        font_size: labelFontSize
+        on_press: root.login(root.ids.ip.text, root.ids.password.text, root.ids.username.text)
+        
+<LoadingScreen>:
+    canvas.before:
+        Color:
+            rgba: 0.1875, 0.1875, 0.1875, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    cols: 1
+    padding: [100, 200]
+    spacing: 20
+
+    Label:
+        id: estText
+        text: "Establishing connection"
+        font_size: textFontSize
+
+    Button:
+        text: "Return"
+        on_press: root.go_back()
+
+<AppScreen>:
