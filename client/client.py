@@ -10,10 +10,12 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.clock import Clock
 
 import socket
 import ssl
 import time
+import errno
 
 class LoginScreen(GridLayout, Screen):
     def login(self, ip, password, username):
@@ -31,14 +33,32 @@ class LoadingScreen(GridLayout, Screen):
         try:
             sock = socket.create_connection((hostname, 8443))
             with context.wrap_socket(sock, server_hostname=hostname) as ssock:
-                msg = ssock.recv(1024)
-                print(msg.decode("utf-8"))
+                mainApp.serverSocket = ssock
+                AppScreen.appLoop(mainApp.serverSocket)
+                mainApp.screenManager.current = 'App'
+                
         except:
-            pass
+            mainApp.screenManager.current = 'Login'
             
 
 class AppScreen(GridLayout, Screen):
-    pass
+    def appLoop(ssock):
+        pass
+        
+    def disconnect(self):
+        mainApp.serverSocket.close()
+        del mainApp.serverSocket
+        mainApp.screenManager.current = 'Login'
+
+    def send_message(self, message, chat):
+        Clock.schedule_once(lambda dt: AppScreen.set_focus(message))
+        if not message.text:
+            return
+        chat.text += '\n'
+        chat.text += message.text
+
+    def set_focus(textInput):
+        textInput.focus = True
 
 class MainApp(App):
     def build(self):

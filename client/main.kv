@@ -20,6 +20,9 @@
         padding: (20,(self.height - textFontSize)/2)
         font_size: textFontSize - 5
         id: ip
+        write_tab: False
+        multiline: False
+        on_text_validate: root.login(root.ids.ip.text, root.ids.password.text, root.ids.username.text)
         
     Label:
         text: "Enter the server password:"
@@ -30,6 +33,9 @@
         padding: (20,(self.height - textFontSize)/2)
         font_size: textFontSize - 5
         id: password
+        write_tab: False
+        multiline: False
+        on_text_validate: root.login(root.ids.ip.text, root.ids.password.text, root.ids.username.text)
 
     Label:
         text: "Enter your username:"
@@ -40,6 +46,9 @@
         padding: (20,(self.height - textFontSize)/2)
         font_size: textFontSize - 5
         id: username
+        write_tab: False
+        multiline: False
+        on_text_validate: root.login(root.ids.ip.text, root.ids.password.text, root.ids.username.text)
 
     Button:
         text: "Login"
@@ -67,3 +76,54 @@
         on_press: root.go_back()
 
 <AppScreen>:
+    canvas.before:
+        Color:
+            rgba: 0.1875, 0.1875, 0.1875, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    cols: 2
+
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: (0.2, 1)
+        ScrollView:
+            id: scroll
+            GridLayout:
+                cols: 1
+                text_size: self.width, None
+                size_hint_y: None
+                height: self.minimum_height
+                Button:
+                    size_hint_y: None
+                    height: 80
+                    text: "Heloooo"
+
+    GridLayout:
+        cols: 1
+
+        ScrollView:
+
+            Label:
+                id: mainTextArea
+                text_size: self.width, None
+                size_hint_y: None
+                height: self.texture_size[1]
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: (1, 0.1)
+            TextInput:
+                id: chatInput
+                multiline: False
+                on_text_validate: root.send_message(root.ids.chatInput, root.ids.mainTextArea); self.text = '';
+            Button:
+                size_hint: (0.1, 1)
+                text: 'Send'
+                on_press: root.send_message(root.ids.chatInput, root.ids.mainTextArea); root.ids.chatInput.text = '';
+                on_release: root.ids.chatInput.focus = True
+
+        Button:
+            size_hint: (1, 0.1)
+            text: "Disconnect"
+            on_press: root.disconnect()
