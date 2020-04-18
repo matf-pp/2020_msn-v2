@@ -77,6 +77,7 @@
 
 <AppScreen>:
     label_wid: mainTextArea
+    chat_list: userListGrid
 
     canvas.before:
         Color:
@@ -92,6 +93,7 @@
         ScrollView:
             id: scroll
             GridLayout:
+                id: userListGrid
                 cols: 1
                 text_size: self.width, None
                 size_hint_y: None

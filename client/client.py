@@ -18,7 +18,7 @@ import ssl
 import time
 import errno
 
-HEADERSIZE = 7
+HEADERSIZE = 8
 
 class LoginScreen(GridLayout, Screen):
     def login(self, ip, password, username):
@@ -33,7 +33,7 @@ class LoadingScreen(GridLayout, Screen):
         hostname = ip
         encUsername = username.encode('utf-8')
         mainApp.username = username
-        usernameHeader = f'{len(encUsername):<{HEADERSIZE}}'.encode('utf-8')
+        usernameHeader = f'0{len(encUsername):<{HEADERSIZE-1}}'.encode('utf-8')
         context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
 
         try:
@@ -44,6 +44,8 @@ class LoadingScreen(GridLayout, Screen):
                 ssock.setblocking(False)
                 ssock.send(usernameHeader + encUsername)
                 mainApp.mainLoopSchedule = Clock.schedule_interval(AppScreen.appLoop, 0.5)
+                mainApp.getOnlineUsers = Clock.schedule_interval(AppScreen.getOnlineUsers, 10)
+                Clock.schedule_once(AppScreen.getOnlineUsers, 2)
                 mainApp.screenManager.current = 'App'
 
             except:
@@ -56,20 +58,44 @@ class LoadingScreen(GridLayout, Screen):
 
 class AppScreen(GridLayout, Screen):
     label_wid = ObjectProperty()
+    chat_list = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(AppScreen, self).__init__(**kwargs)
         mainApp.label = self.label_wid
+        mainApp.chat_list = self.chat_list
+        mainApp.active_users = {}
+        mainApp.disconnected_users = []
 
     def appLoop(time):
         try:
             usernameHeader = mainApp.serverSocket.recv(HEADERSIZE)
-            if not usernameHeader:
+            header = usernameHeader.decode('utf-8').strip()
+            print(header)
+            if header[0] == '1':
+                messageLenght = int(header[1:])
+                message = mainApp.serverSocket.recv(messageLenght).decode('utf-8')
+                recieved = message.split(' ')
+                if recieved[0] == 'clientList':
+                    idList = []
+                    for item in recieved[1:]:
+                        id, name = item.split(',')
+                        idList.append(id)
+                        if id not in mainApp.active_users:
+                            btn = Button(text = f'{name}', size_hint_y = None, height = 80)
+                            mainApp.active_users[id] = btn
+                            mainApp.chat_list.add_widget(btn)
+
+                    for user in mainApp.active_users:
+                        if user not in idList:
+                            mainApp.chat_list.remove_widget(mainApp.active_users[id])
+
+            elif not usernameHeader:
                 print('fatal error, server closed')
-            username_lenght = int(usernameHeader.decode('utf-8').strip())
+            username_lenght = int(header[1:])
             username = mainApp.serverSocket.recv(username_lenght).decode('utf-8')
             messageHeader = mainApp.serverSocket.recv(HEADERSIZE)
-            messageLenght = int(messageHeader.decode('utf-8').strip())
+            messageLenght = int(messageHeader[1:].decode('utf-8').strip())
             msg = mainApp.serverSocket.recv(messageLenght).decode('utf-8')
             mainApp.label.text += '\n'
             mainApp.label.text += username + ': ' + msg
@@ -80,6 +106,7 @@ class AppScreen(GridLayout, Screen):
         mainApp.serverSocket.close()
         del mainApp.serverSocket
         Clock.unschedule(mainApp.mainLoopSchedule)
+        Clock.unschedule(mainApp.getOnlineUsers)
         mainApp.label.text = ''
         mainApp.screenManager.current = 'Login'
 
@@ -90,8 +117,15 @@ class AppScreen(GridLayout, Screen):
         chat.text += '\n'
         chat.text += mainApp.username + ': ' + message.text
         encMessage = message.text.encode('utf-8')
-        messageHeader = f'{len(message.text):<{HEADERSIZE}}'.encode('utf-8')
+        messageHeader = f'0{len(message.text):<{HEADERSIZE-1}}'.encode('utf-8')
         mainApp.serverSocket.send(messageHeader + encMessage)
+
+    def getOnlineUsers(time):
+        command = 'getOnlineUsers'
+        commandHeader = f'1{len(command):<{HEADERSIZE-1}}'.encode('utf-8')
+        command = command.encode('utf-8')
+        mainApp.serverSocket.send(commandHeader + command)
+        print('request sent')
 
     def set_focus(textInput):
         textInput.focus = True
