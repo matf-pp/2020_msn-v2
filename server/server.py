@@ -14,6 +14,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sckt:
         sockets_list = [sock]
         clients = {}
         mapSocketId = {}
+        mapIdSocket = {}
         userIdCounter = 1
 
         def receive_message(client_socket):
@@ -24,13 +25,24 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sckt:
                 header = message_header.decode('utf-8').strip()
                 print(header)
                 if header[0] == '1':
-                    print('got a command from client')
                     command_lenght = int(header[1:])
                     command = client_socket.recv(command_lenght).decode('utf-8').strip()
-                    print(command)
                     if command == 'getOnlineUsers':
                         getOnlineUsers(client_socket)
                     return 1
+
+                elif header[0] == '2':
+                    message_lenght = int(header[1:])
+                    message = client_socket.recv(message_lenght).decode('utf-8').strip()
+                    recieverId = int(message.split(' ', 1)[0])
+                    reciever_socket = mapIdSocket[recieverId]
+                    message = message.replace(str(recieverId), str(mapSocketId[client_socket]), 1)
+                    encMessage = message.encode('utf-8')
+                    messageHeader = f'2{len(message):<{HEADERSIZE-1}}'.encode('utf-8')
+                    reciever_socket.send(messageHeader + encMessage)
+                    return 1
+
+
                 elif header[0] == '0':
                     message_lenght = int(header[1:])
                     return {'header': message_header, 'data': client_socket.recv(message_lenght)}
@@ -41,11 +53,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sckt:
         def getOnlineUsers(client_socket):
             clientList = 'clientList'
             for key in clients:
+                if key == client_socket:
+                    continue
                 output = f' {mapSocketId[key]},{clients[key]["data"].decode("utf-8")}'
                 clientList += output
             responseHeader = f'1{len(clientList):<{HEADERSIZE-1}}'.encode('utf-8')
             response = clientList.encode('utf-8')
-            print(response)
             client_socket.send(responseHeader + response)
             
         while True:
@@ -61,6 +74,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sckt:
                     sockets_list.append(client_socket)
                     clients[client_socket] = user
                     mapSocketId[client_socket] = userIdCounter
+                    mapIdSocket[userIdCounter] = client_socket
                     userIdCounter += 1
                 else:
                     message = receive_message(notified_socket)

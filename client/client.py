@@ -65,7 +65,10 @@ class AppScreen(GridLayout, Screen):
         mainApp.label = self.label_wid
         mainApp.chat_list = self.chat_list
         mainApp.active_users = {}
-        mainApp.disconnected_users = []
+        mainApp.idChatMap = {}
+        mainApp.idNameMap = {}
+        mainApp.idChatMap[0] = ''
+        mainApp.currentActiveChat = 0
 
     def appLoop(time):
         try:
@@ -80,15 +83,29 @@ class AppScreen(GridLayout, Screen):
                     idList = []
                     for item in recieved[1:]:
                         id, name = item.split(',')
+                        id = int(id)
                         idList.append(id)
+                        mainApp.idNameMap[id] = name
                         if id not in mainApp.active_users:
-                            btn = Button(text = f'{name}', size_hint_y = None, height = 80)
+                            btn = Button(text = f'{name}', size_hint_y = None, height = 80, on_press = AppScreen.openPrivateChat)
+                            btn.__self__.buttonId = id
+                            mainApp.idChatMap[id] = ''
                             mainApp.active_users[id] = btn
                             mainApp.chat_list.add_widget(btn)
 
                     for user in mainApp.active_users:
                         if user not in idList:
-                            mainApp.chat_list.remove_widget(mainApp.active_users[id])
+                            mainApp.chat_list.remove_widget(mainApp.active_users[user])
+
+            elif header[0] == '2':
+                messageLenght = int(header[1:])
+                message = mainApp.serverSocket.recv(messageLenght).decode('utf-8').strip()
+                senderId = int(message.split(' ',1)[0].strip())
+                msg = message[(len(str(senderId))):].strip()
+                mainApp.idChatMap[senderId] += '\n'
+                mainApp.idChatMap[senderId] += mainApp.idNameMap[senderId] + ': ' + msg
+                if mainApp.currentActiveChat == senderId:
+                    mainApp.label.text = mainApp.idChatMap[senderId]
 
             elif not usernameHeader:
                 print('fatal error, server closed')
@@ -97,8 +114,10 @@ class AppScreen(GridLayout, Screen):
             messageHeader = mainApp.serverSocket.recv(HEADERSIZE)
             messageLenght = int(messageHeader[1:].decode('utf-8').strip())
             msg = mainApp.serverSocket.recv(messageLenght).decode('utf-8')
-            mainApp.label.text += '\n'
-            mainApp.label.text += username + ': ' + msg
+            mainApp.idChatMap[0] += '\n'
+            mainApp.idChatMap[0] += username + ': ' + msg
+            if mainApp.currentActiveChat == 0:
+                mainApp.label.text = mainApp.idChatMap[0]
         except:
             pass
         
@@ -114,11 +133,18 @@ class AppScreen(GridLayout, Screen):
         Clock.schedule_once(lambda dt: AppScreen.set_focus(message))
         if not (message.text.strip()):
             return
-        chat.text += '\n'
-        chat.text += mainApp.username + ': ' + message.text
-        encMessage = message.text.encode('utf-8')
-        messageHeader = f'0{len(message.text):<{HEADERSIZE-1}}'.encode('utf-8')
-        mainApp.serverSocket.send(messageHeader + encMessage)
+        mainApp.idChatMap[mainApp.currentActiveChat] += '\n'
+        mainApp.idChatMap[mainApp.currentActiveChat] += mainApp.username + ': ' + message.text
+        mainApp.label.text = mainApp.idChatMap[mainApp.currentActiveChat]
+        if mainApp.currentActiveChat == 0:
+            encMessage = message.text.encode('utf-8')
+            messageHeader = f'0{len(message.text):<{HEADERSIZE-1}}'.encode('utf-8')
+            mainApp.serverSocket.send(messageHeader + encMessage)
+        else:
+            newMsg = str(mainApp.currentActiveChat) + ' ' + message.text
+            encMessage = newMsg.encode('utf-8')
+            messageHeader = f'2{len(newMsg):<{HEADERSIZE-1}}'.encode('utf-8')
+            mainApp.serverSocket.send(messageHeader + encMessage)
 
     def getOnlineUsers(time):
         command = 'getOnlineUsers'
@@ -126,6 +152,15 @@ class AppScreen(GridLayout, Screen):
         command = command.encode('utf-8')
         mainApp.serverSocket.send(commandHeader + command)
         print('request sent')
+
+    def openPrivateChat(self):
+        print('private chat opened from: ' + str(self.buttonId))
+        mainApp.label.text = mainApp.idChatMap[self.buttonId]
+        mainApp.currentActiveChat = self.buttonId
+
+    def openGlobalChat(self):
+        mainApp.label.text = mainApp.idChatMap[0]
+        mainApp.currentActiveChat = 0
 
     def set_focus(textInput):
         textInput.focus = True
