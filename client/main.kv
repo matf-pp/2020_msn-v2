@@ -1,6 +1,41 @@
 #:kivy 1.10.1
 #:set textFontSize 25
 #:set labelFontSize 20
+#:import C kivy.utils.get_color_from_hex
+
+<MyTextInput@TextInput>:
+    font_size: '14dp'
+    background_color: 0,0,0,0
+    cursor_color: C('#ffffff')
+    canvas.before:
+        Color:
+            rgba: C('#ffffff')
+    canvas.after:
+        Color:
+            rgb: C('#0f192e')
+        Ellipse:
+            angle_start:180
+            angle_end:360
+            pos:(self.pos[0] - self.size[1]/2.0, self.pos[1])
+            size: (self.size[1], self.size[1])
+        Ellipse:
+            angle_start:360
+            angle_end:540
+            pos: (self.size[0] + self.pos[0] - self.size[1]/2.0, self.pos[1])
+            size: (self.size[1], self.size[1])
+        Color:
+            rgba: C('#3f92db')
+        Line:
+            points: self.pos[0] , self.pos[1], self.pos[0] + self.size[0], self.pos[1]
+        Line:
+            points: self.pos[0], self.pos[1] + self.size[1], self.pos[0] + self.size[0], self.pos[1] + self.size[1]
+        Line:
+            ellipse: self.pos[0] - self.size[1]/2.0, self.pos[1], self.size[1], self.size[1], 180, 360
+        Line:
+            ellipse: self.size[0] + self.pos[0] - self.size[1]/2.0, self.pos[1], self.size[1], self.size[1], 360, 540
+
+
+
 <LoginScreen>:
     canvas.before:
         Color:
@@ -16,7 +51,7 @@
         font_size: labelFontSize
         size_hint: (1,0.5)
 
-    TextInput:
+    MyTextInput:
         padding: (20,(self.height - textFontSize)/2)
         font_size: textFontSize - 5
         id: ip
@@ -50,7 +85,7 @@
         multiline: False
         on_text_validate: root.login(root.ids.ip.text, root.ids.password.text, root.ids.username.text)
 
-    Button:
+    SmoothButton:
         text: 'Login'
         font_size: labelFontSize
         on_press: root.login(root.ids.ip.text, root.ids.password.text, root.ids.username.text)
@@ -133,3 +168,16 @@
             size_hint: (1, 0.1)
             text: 'Disconnect'
             on_press: root.disconnect()
+
+<SmoothButton@Button>:
+    background_color: (0,0,0,0)
+    backgorund_normal: ''
+    back_color: (1,0,1,1)
+    border_radius: [18]
+    canvas.before:
+        Color:
+            rgba: self.back_color
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: self.border_radius
