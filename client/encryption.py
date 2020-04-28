@@ -4,7 +4,7 @@ from Cryptodome.Cipher import AES
 import os
 from Cryptodome.Random import get_random_bytes
 
-#I part
+#AES
 
 def encrypt (plain_text, password):
     salt = get_random_bytes(AES.block_size)
@@ -15,19 +15,23 @@ def encrypt (plain_text, password):
 
     cipher_text, tag = cipher_config.encrypt_and_digest(bytes(plain_text, 'utf-8'))
 
-    return {
+    output = {
         'cipher_text': b64encode(cipher_text).decode('utf-8'),
         'salt': b64encode(salt).decode('utf-8'),
         'nonce' : b64encode(cipher_config.nonce).decode('utf-8'),
         'tag': b64encode(tag).decode('utf-8')
     }
+    result = output['salt'] + '.' + output['nonce'] + '.' + output['tag'] + '.' + output['cipher_text']
+    return result
+    
 
 
-def decrypt(enc_dict, password):
-    salt = b64decode(enc_dict['salt'])
-    cipher_text = b64decode(enc_dict['cipher_text'])
-    nonce = b64decode(enc_dict['nonce'])
-    tag = b64decode(enc_dict['tag'])
+def decrypt(message, password):
+    parts = message.split('.', 3)
+    salt = b64decode(parts[0])
+    nonce = b64decode(parts[1])
+    tag = b64decode(parts[2])
+    cipher_text = b64decode(parts[3])
 
 
     private_key = hashlib.scrypt(
@@ -40,19 +44,7 @@ def decrypt(enc_dict, password):
 
     return decrypted
 
-#For test
-def main():
-    password = input("Password: ")
-
-    encrypted = encrypt("Mirko lagano AES :D", password)
-    print(encrypted)
-
-    decrypted = decrypt(encrypted, password)
-    print(bytes.decode(decrypted))
-
-
-#II part
-
+#elliptic curve diffie hellman
 
 P = 2 ** 255 - 19
 A = 486662
@@ -105,8 +97,3 @@ def genkey(n=0):
     n &= ~(128 << 8 * 31)
     n |= 64 << 8 * 31
     return n
-
-def dh_test():
-    sk1 = genkey()
-    sk2 = genkey()
-    return curve25519(sk1, curve25519(sk2)) == curve25519(sk2, curve25519(sk1))

@@ -31,22 +31,39 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sckt:
                         getOnlineUsers(client_socket)
                     return 1
 
-                elif header[0] == '2':
+                elif header[0] == '2' or header[0] == '3' or header[0] == '4':
                     message_lenght = int(header[1:])
                     message = client_socket.recv(message_lenght).decode('utf-8').strip()
-                    recieverId = int(message.split(' ', 1)[0])
+                    recieverId = int(message.split(' ', 1)[0].strip())
                     reciever_socket = mapIdSocket[recieverId]
                     message = message.replace(str(recieverId), str(mapSocketId[client_socket]), 1)
                     encMessage = message.encode('utf-8')
-                    messageHeader = f'2{len(message):<{HEADERSIZE-1}}'.encode('utf-8')
+                    messageHeader = f'{header[0]}{len(message):<{HEADERSIZE-1}}'.encode('utf-8')
                     reciever_socket.send(messageHeader + encMessage)
+                    return 1
+
+                elif header[0] == '5':
+                    clientId = mapSocketId[client_socket]
+                    encMessage = str(clientId).encode('utf-8')
+                    messageHeader = f'5{len(str(clientId)):<{HEADERSIZE-1}}'.encode('utf-8')
+                    client_socket.send(messageHeader + encMessage)
                     return 1
 
 
                 elif header[0] == '0':
                     message_lenght = int(header[1:])
                     return {'header': message_header, 'data': client_socket.recv(message_lenght)}
-            
+
+                else:
+                    print('===something else===')
+                    print(header)
+                    message_lenght = int(header[1:])
+                    message = client_socket.recv(message_lenght).decode('utf-8').strip()
+                    print('===message===')
+                    print(message)
+                    print('===message===')
+                    return 1
+
             except:
                 return False
 
