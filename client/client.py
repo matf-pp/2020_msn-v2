@@ -121,6 +121,8 @@ class AppScreen(GridLayout, Screen):
                             mainApp.recieveMessageQueue.remove(message)
                             if mainApp.currentActiveChat == recieverId:
                                 mainApp.label.text = mainApp.idChatMap[recieverId]
+                            else:
+                                mainApp.active_users[recieverId].__self__.background_color = (1,0,0,1)
                         except Exception as e:
                             print(e)
                     else:
@@ -143,6 +145,9 @@ class AppScreen(GridLayout, Screen):
                         if id not in mainApp.active_users:
                             btn = Button(text = f'{name}', size_hint_y = None, height = 80, on_press = AppScreen.openPrivateChat)
                             btn.__self__.buttonId = id
+                            btn.color = (0,0,0,1)
+                            btn.background_color = (0.55,0.89,0.95,1)
+                            btn.background_normal = ''
                             mainApp.idChatMap[id] = ''
                             mainApp.active_users[id] = btn
                             mainApp.chat_list.add_widget(btn)
@@ -227,6 +232,7 @@ class AppScreen(GridLayout, Screen):
 
     def openPrivateChat(self):
         print('private chat opened from: ' + str(self.buttonId))
+        self.background_color = (0.55,0.89,0.95,1)
         mainApp.label.text = mainApp.idChatMap[self.buttonId]
         mainApp.currentActiveChat = self.buttonId
         AppScreen.getSharedSecret(self.buttonId)
