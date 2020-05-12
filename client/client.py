@@ -17,11 +17,13 @@ import encryption
 HEADERSIZE = 8
 
 class LoginScreen(GridLayout, Screen):
+
     def login(self, ip, password, username):
         mainApp.screenManager.current = 'Loading'
         LoadingScreen.connect(ip,password,username)
 
 class LoadingScreen(GridLayout, Screen):
+
     def go_back(self):
         mainApp.screenManager.current = 'Login'
 
@@ -48,7 +50,7 @@ class LoadingScreen(GridLayout, Screen):
             except Exception:
                 print('ssock failed')
                 mainApp.screenManager.current = 'Login'
-        except:
+        except Exception:
             print('create connection failed')
             mainApp.screenManager.current = 'Login'
             
@@ -70,6 +72,7 @@ class AppScreen(GridLayout, Screen):
         mainApp.myId = -1
         mainApp.sendMessageQueue = []
         mainApp.recieveMessageQueue = []
+
 
     def appLoop(time):
         try:
@@ -188,7 +191,8 @@ class AppScreen(GridLayout, Screen):
 
         except Exception:
             return
-            
+
+
     def disconnect(self):
         mainApp.serverSocket.close()
         del mainApp.serverSocket
@@ -196,6 +200,7 @@ class AppScreen(GridLayout, Screen):
         Clock.unschedule(mainApp.getOnlineUsers)
         mainApp.label.text = ''
         mainApp.screenManager.current = 'Login'
+
 
     def send_message(self, message, chat):
         Clock.schedule_once(lambda dt: AppScreen.set_focus(message))
@@ -212,7 +217,7 @@ class AppScreen(GridLayout, Screen):
             newMsg = str(mainApp.currentActiveChat) + ' ' + message.text
             mainApp.sendMessageQueue.append(newMsg)
             print(mainApp.sendMessageQueue)
-            
+
 
     def getOnlineUsers(time):
         command = 'getOnlineUsers'
@@ -221,6 +226,7 @@ class AppScreen(GridLayout, Screen):
         mainApp.serverSocket.send(commandHeader + command)
         print('request sent')
 
+    @staticmethod
     def getMyId():
         header = f'50000000'.encode('utf-8')
         mainApp.serverSocket.send(header)
@@ -276,6 +282,7 @@ class AppScreen(GridLayout, Screen):
                     encMessage = msg.encode('utf-8')
                     header = f'4{len(msg):<{HEADERSIZE-1}}'.encode('utf-8')
                     mainApp.serverSocket.send(header + encMessage)
+
 
 
     def openGlobalChat(self):

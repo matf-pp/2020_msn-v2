@@ -105,7 +105,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sckt:
                     for client_socket in clients:
                         if client_socket != notified_socket:
                             client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
-                            
+
             for notified_socket in exception_sockets:
                 sockets_list.remove(notified_socket)
                 del clients[notified_socket]
