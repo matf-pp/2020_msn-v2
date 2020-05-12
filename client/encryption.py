@@ -87,8 +87,6 @@ def curve25519(n, base=9):
     ((x,z), _) = f(n)
     return (x * inv(z)) % P
 
-import random
-
 def genkey(n=0):
     n = n or random.randint(0,P)
     n &= ~7

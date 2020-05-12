@@ -64,7 +64,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sckt:
                     print('===message===')
                     return 1
 
-            except:
+            except Exception as e:
                 return False
 
         def getOnlineUsers(client_socket):
