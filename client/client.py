@@ -45,7 +45,7 @@ class LoadingScreen(GridLayout, Screen):
                 AppScreen.getMyId()
                 mainApp.screenManager.current = 'App'
 
-            except:
+            except Exception:
                 print('ssock failed')
                 mainApp.screenManager.current = 'Login'
         except:
@@ -186,9 +186,9 @@ class AppScreen(GridLayout, Screen):
             if mainApp.currentActiveChat == 0:
                 mainApp.label.text = mainApp.idChatMap[0]
 
-        except Exception as e:
-            print(e)
-        
+        except Exception:
+            return
+            
     def disconnect(self):
         mainApp.serverSocket.close()
         del mainApp.serverSocket
@@ -258,7 +258,7 @@ class AppScreen(GridLayout, Screen):
                         public = mainApp.idSharedsecretMap[id]['public']
                         mainApp.idSharedsecretMap[id]['shared'] = encryption.curve25519(myPrivate, public)
                         print('i got the shared key1:' + str(mainApp.idSharedsecretMap[id]['shared']))
-            
+
             elif 'public' in mainApp.idSharedsecretMap[id]:
                 myPrivateKey = encryption.genkey()
                 publicKey = mainApp.idSharedsecretMap[id]['public']

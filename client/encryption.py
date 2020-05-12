@@ -8,7 +8,6 @@ from Cryptodome.Random import random
 
 def encrypt (plain_text, password):
     salt = get_random_bytes(AES.block_size)
-    
     private_key = hashlib.scrypt(password.encode(), salt = salt, n=2**14, r=8, p=1, dklen=32)
 
     cipher_config = AES.new(private_key, AES.MODE_GCM)
