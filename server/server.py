@@ -84,7 +84,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sckt:
                 if notified_socket == sock:
                     client_socket, client_address = sock.accept()
                     user = receive_message(client_socket)
-                    if user is 1:
+                    if user == 1:
                         continue
                     elif user is False:
                         continue
@@ -95,7 +95,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sckt:
                     userIdCounter += 1
                 else:
                     message = receive_message(notified_socket)
-                    if message is 1:
+                    if message == 1:
                         continue
                     elif message is False:
                         sockets_list.remove(notified_socket)

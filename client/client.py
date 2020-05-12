@@ -7,16 +7,11 @@ Config.set('graphics', 'minimum_height', '500')
 from kivy.app import App
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
-from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.clock import Clock
 from kivy.properties import ObjectProperty
-
 import socket
 import ssl
-import time
-import errno
 import encryption
 
 HEADERSIZE = 8
@@ -52,7 +47,7 @@ class LoadingScreen(GridLayout, Screen):
 
             except:
                 print('ssock failed')
-                mainApp.screenManager.current = 'Login'                
+                mainApp.screenManager.current = 'Login'
         except:
             print('create connection failed')
             mainApp.screenManager.current = 'Login'
@@ -167,9 +162,9 @@ class AppScreen(GridLayout, Screen):
                 senderId = int(message.split(' ',1)[0].strip())
                 key = message[(len(str(senderId))):].strip()
                 if senderId not in mainApp.idSharedsecretMap:
-                    mainApp.idSharedsecretMap[senderId] = {'public': int(key)}  
+                    mainApp.idSharedsecretMap[senderId] = {'public': int(key)}
                 else:
-                    mainApp.idSharedsecretMap[senderId]['public'] = int(key)  
+                    mainApp.idSharedsecretMap[senderId]['public'] = int(key)
                 AppScreen.getSharedSecret(senderId)
 
             elif header[0] == '5':
@@ -191,8 +186,8 @@ class AppScreen(GridLayout, Screen):
             if mainApp.currentActiveChat == 0:
                 mainApp.label.text = mainApp.idChatMap[0]
 
-        except:
-            pass
+        except Exception as e:
+            print(e)
         
     def disconnect(self):
         mainApp.serverSocket.close()
@@ -308,7 +303,6 @@ class MainApp(App):
         screen = Screen(name='App')
         screen.add_widget(self.appScreen)
         self.screenManager.add_widget(screen)
-        
         return self.screenManager
 
 if __name__ == '__main__':

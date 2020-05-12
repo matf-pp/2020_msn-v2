@@ -1,8 +1,8 @@
 from base64 import b64encode, b64decode
 import hashlib
 from Cryptodome.Cipher import AES
-import os
 from Cryptodome.Random import get_random_bytes
+from Cryptodome.Random import random
 
 #AES
 
@@ -23,8 +23,6 @@ def encrypt (plain_text, password):
     }
     result = output['salt'] + '.' + output['nonce'] + '.' + output['tag'] + '.' + output['cipher_text']
     return result
-    
-
 
 def decrypt(message, password):
     parts = message.split('.', 3)
@@ -80,7 +78,7 @@ def curve25519(n, base=9):
     # containing the mth multiple and the
     # (m+1)th multiple of base.
     def f(m):
-        if m == 1: 
+        if m == 1:
             return (one, two)
         (pm, pm1) = f(m // 2)
         if (m & 1):
