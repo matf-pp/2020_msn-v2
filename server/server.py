@@ -2,6 +2,8 @@ import socket
 import ssl
 import select
 
+
+serverPassword = ''
 HEADERSIZE = 8
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 context.load_cert_chain(certfile="cert.pem",keyfile="cert.pem")
@@ -49,6 +51,19 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sckt:
                     client_socket.send(messageHeader + encMessage)
                     return 1
 
+                elif header[0] == '9':
+                    if serverPassword == '':
+                        return 1
+                    else:
+                        message_lenght = int(header[1:])
+                        if message_lenght != 0:
+                            password = client_socket.recv(message_lenght).decode('utf-8').strip()
+                            if password != serverPassword:
+                                disconnectUser(client_socket)
+                        else:
+                            disconnectUser(client_socket)
+                        return 1
+
 
                 elif header[0] == '0':
                     message_lenght = int(header[1:])
@@ -77,7 +92,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sckt:
             responseHeader = f'1{len(clientList):<{HEADERSIZE-1}}'.encode('utf-8')
             response = clientList.encode('utf-8')
             client_socket.send(responseHeader + response)
-            
+
+        def disconnectUser(client_socket):
+            sockets_list.remove(client_socket)
+            del clients[client_socket]
+            clientId = mapSocketId[client_socket]
+            del mapSocketId[client_socket]
+            del mapIdSocket[clientId]
+            client_socket.close()
+
         while True:
             read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list)
             for notified_socket in read_sockets:
@@ -107,5 +130,4 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sckt:
                             client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
 
             for notified_socket in exception_sockets:
-                sockets_list.remove(notified_socket)
-                del clients[notified_socket]
+                disconnectUser(notified_socket)

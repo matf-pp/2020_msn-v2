@@ -13,6 +13,7 @@ from kivy.properties import ObjectProperty
 import socket
 import ssl
 import encryption
+import errno
 
 HEADERSIZE = 8
 
@@ -23,15 +24,22 @@ class LoginScreen(GridLayout, Screen):
         LoadingScreen.connect(ip,password,username)
 
 class LoadingScreen(GridLayout, Screen):
+    loadingText = ObjectProperty()
+    
+    def __init__(self, **kwargs):
+        super(LoadingScreen, self).__init__(**kwargs)
+        mainApp.loadingText = self.loadingText
 
     def go_back(self):
         mainApp.screenManager.current = 'Login'
 
     def connect(ip, password, username):
         hostname = ip
-        encUsername = username.encode('utf-8')
-        mainApp.username = username
+        encUsername = username.strip().encode('utf-8')
+        mainApp.username = username.strip()
         usernameHeader = f'0{len(encUsername):<{HEADERSIZE-1}}'.encode('utf-8')
+        encPassword = password.strip().encode('utf-8')
+        passwordHeader = f'9{len(encPassword):<{HEADERSIZE-1}}'.encode('utf-8')
         context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
 
         try:
@@ -41,9 +49,9 @@ class LoadingScreen(GridLayout, Screen):
                 mainApp.serverSocket = ssock
                 ssock.setblocking(False)
                 ssock.send(usernameHeader + encUsername)
+                ssock.send(passwordHeader + encPassword)
                 mainApp.mainLoopSchedule = Clock.schedule_interval(AppScreen.appLoop, 0.1)
                 mainApp.getOnlineUsers = Clock.schedule_interval(AppScreen.getOnlineUsers, 5)
-                Clock.schedule_once(AppScreen.getOnlineUsers, 2)
                 AppScreen.getMyId()
                 mainApp.screenManager.current = 'App'
 
@@ -54,6 +62,9 @@ class LoadingScreen(GridLayout, Screen):
             print('create connection failed')
             mainApp.screenManager.current = 'Login'
             
+class SmoothButton(Button):
+    def __init__(self, **kwargs):
+        super(Button, self).__init__(**kwargs)
 
 class AppScreen(GridLayout, Screen):
     label_wid = ObjectProperty()
@@ -141,11 +152,7 @@ class AppScreen(GridLayout, Screen):
                         idList.append(id)
                         mainApp.idNameMap[id] = name
                         if id not in mainApp.active_users:
-                            btn = Button(text = f'{name}', size_hint_y = None, height = 80, on_press = AppScreen.openPrivateChat)
-                            btn.__self__.buttonId = id
-                            btn.color = (0,0,0,1)
-                            btn.background_color = (0.55,0.89,0.95,1)
-                            btn.background_normal = ''
+                            btn = SmoothButton(text = f'{name}', size_hint_y = None, height = 80, on_press = AppScreen.openPrivateChat)
                             mainApp.idChatMap[id] = ''
                             mainApp.active_users[id] = btn
                             mainApp.chat_list.add_widget(btn)
@@ -189,18 +196,27 @@ class AppScreen(GridLayout, Screen):
             if mainApp.currentActiveChat == 0:
                 mainApp.label.text = mainApp.idChatMap[0]
 
-        except Exception:
-            return
+        except Exception as e:
+            if type(e) is ConnectionResetError:
+                AppScreen.connectionAborted(e)
+            elif type(e) is ssl.SSLWantReadError:
+                return
 
+    def connectionAborted(e):
+        mainApp.screenManager.current = 'Loading'
+        mainApp.loadingText.text = 'Connection aborted by server'
+        AppScreen.removeLocalInfo(e)
 
-    def disconnect(self):
+    def removeLocalInfo(e):
         mainApp.serverSocket.close()
         del mainApp.serverSocket
         Clock.unschedule(mainApp.mainLoopSchedule)
         Clock.unschedule(mainApp.getOnlineUsers)
         mainApp.label.text = ''
-        mainApp.screenManager.current = 'Login'
 
+    def disconnect(self):
+        AppScreen.removeLocalInfo(self)
+        mainApp.screenManager.current = 'Login'
 
     def send_message(self, message, chat):
         Clock.schedule_once(lambda dt: AppScreen.set_focus(message))
