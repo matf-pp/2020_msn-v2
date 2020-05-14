@@ -13,12 +13,10 @@ from kivy.properties import ObjectProperty
 import socket
 import ssl
 import encryption
-import errno
 
 HEADERSIZE = 8
 
 class LoginScreen(GridLayout, Screen):
-
     def login(self, ip, password, username):
         mainApp.screenManager.current = 'Loading'
         LoadingScreen.connect(ip,password,username)
@@ -61,14 +59,15 @@ class LoadingScreen(GridLayout, Screen):
         except Exception:
             print('create connection failed')
             mainApp.screenManager.current = 'Login'
-            
+
 class SmoothButton(Button):
     def __init__(self, **kwargs):
-        super(Button, self).__init__(**kwargs)
+        super(SmoothButton, self).__init__(**kwargs)
 
 class AppScreen(GridLayout, Screen):
     label_wid = ObjectProperty()
     chat_list = ObjectProperty()
+    global_chat_btn = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(AppScreen, self).__init__(**kwargs)
@@ -83,6 +82,7 @@ class AppScreen(GridLayout, Screen):
         mainApp.myId = -1
         mainApp.sendMessageQueue = []
         mainApp.recieveMessageQueue = []
+        mainApp.globalChatBtn = self.global_chat_btn
 
 
     def appLoop(time):
@@ -131,7 +131,7 @@ class AppScreen(GridLayout, Screen):
                             if mainApp.currentActiveChat == recieverId:
                                 mainApp.label.text = mainApp.idChatMap[recieverId]
                             else:
-                                mainApp.active_users[recieverId].__self__.background_color = (1,0,0,1)
+                                mainApp.active_users[recieverId].back_color = (1,0,0,1)
                         except Exception as e:
                             print(e)
                     else:
@@ -153,6 +153,7 @@ class AppScreen(GridLayout, Screen):
                         mainApp.idNameMap[id] = name
                         if id not in mainApp.active_users:
                             btn = SmoothButton(text = f'{name}', size_hint_y = None, height = 80, on_press = AppScreen.openPrivateChat)
+                            btn.__self__.buttonId = id
                             mainApp.idChatMap[id] = ''
                             mainApp.active_users[id] = btn
                             mainApp.chat_list.add_widget(btn)
@@ -195,6 +196,8 @@ class AppScreen(GridLayout, Screen):
             mainApp.idChatMap[0] += username + ': ' + msg
             if mainApp.currentActiveChat == 0:
                 mainApp.label.text = mainApp.idChatMap[0]
+            else:
+                mainApp.globalChatBtn.back_color = (1,0,0,1)
 
         except Exception as e:
             if type(e) is ConnectionResetError:
@@ -249,7 +252,7 @@ class AppScreen(GridLayout, Screen):
 
     def openPrivateChat(self):
         print('private chat opened from: ' + str(self.buttonId))
-        self.background_color = (0.55,0.89,0.95,1)
+        self.back_color = (0.55,0.89,0.95,1)
         mainApp.label.text = mainApp.idChatMap[self.buttonId]
         mainApp.currentActiveChat = self.buttonId
         AppScreen.getSharedSecret(self.buttonId)
@@ -299,10 +302,9 @@ class AppScreen(GridLayout, Screen):
                     header = f'4{len(msg):<{HEADERSIZE-1}}'.encode('utf-8')
                     mainApp.serverSocket.send(header + encMessage)
 
-
-
     def openGlobalChat(self):
         mainApp.label.text = mainApp.idChatMap[0]
+        mainApp.globalChatBtn.back_color = (0.55,0.89,0.95,1)
         mainApp.currentActiveChat = 0
 
     def set_focus(textInput):

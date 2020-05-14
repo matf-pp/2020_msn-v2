@@ -116,6 +116,7 @@
 <AppScreen>:
     label_wid: mainTextArea
     chat_list: userListGrid
+    global_chat_btn: global_chat_btn
 
     canvas.before:
         Color:
@@ -137,6 +138,7 @@
                 size_hint_y: None
                 height: self.minimum_height
                 SmoothButton:
+                    id: global_chat_btn
                     size_hint_y: None
                     height: 80
                     text: 'Global chat'
@@ -146,7 +148,7 @@
         cols: 1
 
         ScrollView:
-
+            scroll_y: 0
             Label:
                 id: mainTextArea
                 text_size: self.width, None
