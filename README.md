@@ -4,18 +4,18 @@
 
 Aplikacija nalik na MSN za četovanja
 
-### Opis:
+## Opis
 Aplikacija je namenjena grupnom četovanju, takodje je moguce primati i privatne poruke od korisnika grupnog ceta i sa njim četovati posebno (takav vid cetovanje je enkriptovan sa e2ee).
 
-### Nepohodne biblioteke
+## Nepohodne biblioteke
 :one: Kivy<br>
 :two: Pycryptodome<br>
 :exclamation:Neophodna verzija 3.7 Python 
 
-### Pokretanje:
+## Pokretanje
 :one: Pokrenuti server sa komandom: <b>python server.py</b> (pre toga se pozicionirati u taj direktorijum)<br>
 :two: Zatim pokrenuti željeni broj klijenata sa komandom: <b>python client.py</b> (takodje, se pozicioniraiti u direktorijum)
 
-### Autori:
+## Autori
 :white_circle: Nikolić Aleksandar mi17070@matf.bg.ac.rs<br>
 :black_circle: Ilić Mirko ai17200@matf.bg.ac.rs
